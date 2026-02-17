@@ -1,0 +1,131 @@
+import json
+import os
+
+# -------------------------
+# Student Class
+# -------------------------
+class Student:
+    def _init_(self, name, student_id, grade):
+        self.name = name
+        self.student_id = student_id
+        self.grade = grade
+
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "id": self.student_id,
+            "grade": self.grade
+        }
+
+
+# -------------------------
+# Manager Class
+# -------------------------
+class StudentManager:
+    def _init_(self, filename="students.json"):
+        self.filename = filename
+        self.students = []
+        self.load_from_file()
+
+    # Load existing records
+    def load_from_file(self):
+        if os.path.exists(self.filename):
+            with open(self.filename, "r") as f:
+                try:
+                    data = json.load(f)
+                    for s in data:
+                        self.students.append(Student(s["name"], s["id"], s["grade"]))
+                except json.JSONDecodeError:
+                    self.students = []
+
+    # Save to JSON file
+    def save_to_file(self):
+        with open(self.filename, "w") as f:
+            json.dump([s.to_dict() for s in self.students], f, indent=4)
+
+    # Add student with ID validation
+    def add_student(self, name, student_id, grade):
+        if any(s.student_id == student_id for s in self.students):
+            print("❌ Error: ID already exists.")
+            return
+        self.students.append(Student(name, student_id, grade))
+        self.save_to_file()
+        print("✔ Student added successfully!")
+
+    # Update
+    def update_student(self, student_id, new_name, new_grade):
+        for s in self.students:
+            if s.student_id == student_id:
+                s.name = new_name
+                s.grade = new_grade
+                self.save_to_file()
+                print("✔ Student updated successfully!")
+                return
+        print("❌ Student not found.")
+
+    # Delete
+    def delete_student(self, student_id):
+        for s in self.students:
+            if s.student_id == student_id:
+                self.students.remove(s)
+                self.save_to_file()
+                print("✔ Student deleted successfully!")
+                return
+        print("❌ Student not found.")
+
+    # List all
+    def list_students(self):
+        if not self.students:
+            print("No records found.")
+            return
+        print("\n----- Student Records -----")
+        for s in self.students:
+            print(f"ID: {s.student_id} | Name: {s.name} | Grade: {s.grade}")
+        print("----------------------------\n")
+
+
+# -----------------------------------
+# CLI Menu
+# -----------------------------------
+def main():
+    manager = StudentManager()
+
+    while True:
+        print("\n===== Student Management System =====")
+        print("1. Add Student")
+        print("2. Update Student")
+        print("3. Delete Student")
+        print("4. List Students")
+        print("5. Exit")
+
+        choice = input("Enter choice: ")
+
+        if choice == "1":
+            name = input("Enter name: ")
+            student_id = input("Enter ID: ")
+            grade = input("Enter grade: ")
+            manager.add_student(name, student_id, grade)
+
+        elif choice == "2":
+            student_id = input("Enter ID to update: ")
+            new_name = input("Enter new name: ")
+            new_grade = input("Enter new grade: ")
+            manager.update_student(student_id, new_name, new_grade)
+
+        elif choice == "3":
+            student_id = input("Enter ID to delete: ")
+            manager.delete_student(student_id)
+
+        elif choice == "4":
+            manager.list_students()
+
+        elif choice == "5":
+            print("Goodbye!")
+            break
+
+        else:
+            print("Invalid choice. Try again.")
+
+
+if '__name__' == "__main__":
+    main()
